@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.ruyi.mapper.SetmealMapper">
+    <!--根据分类id查询对应的套餐数量-->
+    <select id="cuntByCategoryId" resultType="java.lang.Long">
+        select count(*)
+        from setmeal
+        where category_id = #{id}
+    </select>
+
+    <!--根据套餐id更新套餐数据-->
+    <update id="updatesByIds">
+        update setmeal
+        <set>
+            <if test="categoryId != null">
+                category_id = #{categoryId},
+            </if>
+            <if test="name != null">
+                name = #{name},
+            </if>
+            <if test="price != null">
+                price = #{price},
+            </if>
+            <if test="image != null">
+                image = #{image},
+            </if>
+            <if test="description != null">
+                description = #{description},
+            </if>
+            <if test="status != null">
+                status = #{status},
+            </if>
+            <if test="updateTime != null">
+                update_time = #{updateTime},
+            </if>
+            <if test="updateUser != null">
+                update_user = #{updateUser}
+            </if>
+        </set>
+        where id = #{id}
+    </update>
+
+    <!--套餐表插入数据-->
+    <insert id="insert" parameterType="Setmeal" useGeneratedKeys="true" keyProperty="id">
+        insert into setmeal(category_id, name, price, status, description, image, create_time, update_time,
+                            create_user, update_user)
+        values (#{categoryId}, #{name}, #{price}, #{status}, #{description}, #{image}, #{createTime}, #{updateTime},
+                #{createUser}, #{updateUser})
+    </insert>
+
+
+    <!--套餐分页查询-->
+    <select id="pageQuery" resultType="com.ruyi.vo.SetmealVO">
+        select setmeal.*,c.name as categoryName
+        from setmeal
+        left join category c on setmeal.category_id = c.id
+        <where>
+            <if test="name != null and name !=''">
+                setmeal.name like "%"#{name}"%"
+            </if>
+            <if test="categoryId != null ">
+                and setmeal.category_id =#{categoryId}
+            </if>
+            <if test="status != null ">
+                and setmeal.status =#{status}
+            </if>
+        </where>
+        order by setmeal.create_time desc
+    </select>
+
+    <!--通过套餐id查找套餐数据-->
+    <select id="getById" resultType="com.ruyi.entity.Setmeal">
+        select *
+        from setmeal
+        where id = #{id};
+    </select>
+
+
+    <!--套餐ids删除套餐表中的数据-->
+    <delete id="deleteById">
+        delete
+        from setmeal
+        where id in
+        <foreach collection="ids" item="id" separator="," open="(" close=")">
+            #{id}
+        </foreach>
+    </delete>
+
+    <!--封装套餐关联数据-->
+    <resultMap id="SetmealVOMap" type="com.ruyi.vo.SetmealVO" autoMapping="true">
+        <id column="id" property="id"/>
+        <collection property="setmealDishes" ofType="setmealDish" autoMapping="true">
+            <id column="sd_id" property="id"/>
+            <result column="sd_name" property="name"/>
+            <result column="sd_price" property="price"/>
+        </collection>
+    </resultMap>
+    <!--id查询套餐查询所有套餐关联数据-->
+    <select id="getByIdWithDish" resultMap="SetmealVOMap">
+        select setmeal.*, sd.id sd_id, sd.setmeal_id, sd.dish_id, sd.name sd_name, sd.price sd_price, sd.copies
+        from setmeal
+                 left join setmeal_dish sd on setmeal.id = sd.setmeal_id
+        where setmeal.id = #{id}
+    </select>
+
+    <!--动态条件查询套餐-->
+    <select id="list" parameterType="Setmeal" resultType="Setmeal">
+        select * from setmeal
+        <where>
+            <if test="name != null">
+                and name like '%${name}%'
+            </if>
+            <if test="categoryId != null">
+                and category_id = #{categoryId}
+            </if>
+            <if test="status != null">
+                and status = #{status}
+            </if>
+        </where>
+    </select>
+
+
+    <!--根据条件统计套餐数量-->
+    <select id="countByMap" resultType="java.lang.Integer">
+        select count(id) from setmeal
+        <where>
+            <if test="status != null">
+                and status = #{status}
+            </if>
+            <if test="categoryId != null">
+                and category_id = #{categoryId}
+            </if>
+        </where>
+    </select>
+
+
+</mapper>

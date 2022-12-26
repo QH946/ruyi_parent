@@ -1,0 +1,181 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.ruyi.mapper.DishMapper">
+
+    <!--根据分类id查询对应的菜品数量-->
+    <select id="cuntByCategoryId" resultType="java.lang.Long">
+        select count(id)
+        from dish
+        where category_id = #{id};
+    </select>
+
+    <!--
+        插入数据到菜品表  id回传给口味表
+        useGeneratedKeys设置为true：在执行插入记录之后可以获取到数据库自动生成的主键值
+        keyProperty：指定Java对象的属性名
+    -->
+    <insert id="insert" parameterType="Dish" useGeneratedKeys="true" keyProperty="id">
+        insert into dish (name, category_id, price, image, description, status, create_time, update_time,
+                          create_user, update_user)
+        values (#{name}, #{categoryId}, #{price}, #{image}, #{description}, #{status}, #{createTime}, #{updateTime},
+                #{createUser}, #{updateUser})
+    </insert>
+
+    <!--菜品信息分页查询-->
+    <select id="PageQuery" resultType="com.ruyi.vo.DishVO">
+        select d.*,c.name as categoryName
+        from dish d left join category c on c.id = d.category_id
+        <where>
+            <if test="name !=null and name !=''">
+                d.name like "%"#{name}"%"
+            </if>
+            <if test="categoryId != null">
+                and d.category_id = #{categoryId}
+            </if>
+            <if test="status != null">
+                and d.status = #{status}
+            </if>
+        </where>
+        order by d.create_time desc
+    </select>
+
+    <!--根据id查询所有菜品-->
+    <select id="selectById" resultType="com.ruyi.entity.Dish">
+        select *
+        from dish
+        where id = #{dishId};
+    </select>
+
+    <!--根据id删除菜品-->
+    <delete id="deleteById">
+        delete
+        from dish
+        where id = #{dishId}
+    </delete>
+
+    <!--菜品vo对象 注入 关联的口味对象-->
+    <resultMap id="DishVOMap" type="com.ruyi.vo.DishVO" autoMapping="true">
+        <id column="id" property="id"/>
+        <collection property="flavors" resultMap="DishFlavorMap"/>
+    </resultMap>
+    <resultMap id="DishFlavorMap" type="com.ruyi.entity.DishFlavor" autoMapping="true">
+        <result property="id" column="dfid"/>
+        <result property="name" column="dfname"/>
+    </resultMap>
+
+    <!--根据id查询菜品和关联的口味-->
+    <select id="getByIdWithFlavor" resultMap="DishVOMap">
+        select dish.*, df.id as dfid, df.name as dfname, df.value
+        from dish
+                 left join dish_flavor df on dish.id = df.dish_id
+        where dish.id = #{id}
+    </select>
+
+    <!--更新菜品数据-->
+    <update id="update">
+        update dish
+        <set>
+            <if test="categoryId != null">
+                category_id = #{categoryId},
+            </if>
+            <if test="name != null">
+                name = #{name},
+            </if>
+            <if test="price != null">
+                price = #{price},
+            </if>
+            <if test="image != null">
+                image = #{image},
+            </if>
+            <if test="description != null">
+                description = #{description},
+            </if>
+            <if test="status != null">
+                status = #{status},
+            </if>
+            <if test="updateTime != null">
+                update_time = #{updateTime},
+            </if>
+            <if test="updateUser != null">
+                update_user = #{updateUser}
+            </if>
+        </set>
+        where id = #{id}
+    </update>
+
+    <!--根据分类id,状态码，菜品名 查询菜品信息-->
+    <select id="list" resultType="com.ruyi.entity.Dish">
+        select * from dish
+        <where>
+            <if test="name != null">
+                and name like concat('%',#{name},'%')
+            </if>
+            <if test="categoryId != null">
+                and category_id = #{categoryId}
+            </if>
+            <if test="status != null">
+                and status = #{status}
+            </if>
+        </where>
+        order by create_time desc
+    </select>
+
+    <!--根据套餐id查询菜品-->
+    <select id="getBySetmealId" resultType="com.ruyi.entity.Dish">
+        select dish.*
+        from dish
+                 left join setmeal_dish sd on dish.id = sd.dish_id
+        where sd.setmeal_id = #{setmealId}
+    </select>
+
+    <!--动态条件查询菜品和口味-->
+    <select id="listWithFlavor" parameterType="Dish" resultMap="DishVOMap">
+        select
+        a.*,b.id as dfid,b.name as dfname,b.value
+        from
+        dish a
+        left join
+        dish_flavor b
+        on
+        a.id = b.dish_id
+        <where>
+            <if test="name != null">
+                and a.name like "%"#{name}"%"
+            </if>
+            <if test="categoryId != null">
+                and category_id = #{categoryId}
+            </if>
+            <if test="status != null">
+                and status = #{status}
+            </if>
+        </where>
+    </select>
+
+    <!--根据套餐id查询菜品选项-->
+    <select id="getDishItemBySetmealId" resultType="com.ruyi.vo.DishItemVO">
+        select sd.name,
+               sd.copies,
+               d.image,
+               d.description
+        from setmeal_dish sd
+                 left join
+             dish d
+             on
+                 sd.dish_id = d.id
+        where sd.setmeal_id = #{setmealId}
+    </select>
+
+    <!--根据条件统计菜品数量-->
+    <select id="countByMap" resultType="java.lang.Integer">
+        select count(id) from dish
+        <where>
+            <if test="status != null">
+                and status = #{status}
+            </if>
+            <if test="categoryId != null">
+                and category_id = #{categoryId}
+            </if>
+        </where>
+    </select>
+
+</mapper>

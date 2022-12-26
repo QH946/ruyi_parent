@@ -1,0 +1,9 @@
+{
+  "navigationBarTitleText": "个人中心",
+  "enablePullDownRefresh": false,
+  "navigationBarBackgroundColor": "#ffc200",
+  "navigationBarTextStyle": "black",
+  "usingComponents": {
+    "reach-bottom": "/components/reach-bottom/reach-bottom"
+  }
+}
